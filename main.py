@@ -1,4 +1,4 @@
-from functions import *
+from lib import *
 
 if __name__ == "__main__":
     board = [
