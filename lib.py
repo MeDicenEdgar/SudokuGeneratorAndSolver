@@ -1,4 +1,9 @@
 from random import shuffle, randint
+from turtle import width
+import pygame
+from constants import *
+
+window = pygame.display.set_mode((WIDTH, HEIGHT))
 
 class Space:
     def __init__(self, value, canUserInput=False):
@@ -10,6 +15,35 @@ class Space:
     
     def __repr__(self) -> str:
         return self.value
+
+def main():
+    pygame.display.set_caption("Sudoku!")
+    clock = pygame.time.Clock()
+    run = True
+    state = 0
+    while run:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+        state = drawWindow(state)
+    pygame.quit()
+
+def drawWindow(state):
+    window.fill(WHITE)
+    if state == 0:
+        drawMenu()
+    pygame.display.update()
+    return state
+
+def drawMenu():
+    width = 110
+    height = 50
+    pygame.draw.rect(window, GREY, (WIDTH/2-width/2, WIDTH/3-width/3, width, height))
+    pygame.draw.rect(window, GREY, (WIDTH/2-width/2, (WIDTH/3-width/3)*1.8, width, height))
+    pygame.draw.rect(window, GREY, (WIDTH/2-width/2, (WIDTH/3-width/3)*2.6, width, height))
+    pygame.draw.line(window, BLACK, (0, HEIGHT/6), (WIDTH, HEIGHT/6))
+
 
 def isValidMove(board, row, col, num):
     for i in range(9):
