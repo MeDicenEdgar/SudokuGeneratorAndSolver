@@ -3,8 +3,6 @@ from turtle import width
 import pygame
 from constants import *
 
-window = pygame.display.set_mode((WIDTH, HEIGHT))
-
 class Space:
     def __init__(self, value, canUserInput=False):
         self.value = value
@@ -43,6 +41,7 @@ def drawMenu():
     pygame.draw.rect(window, GREY, (WIDTH/2-width/2, (WIDTH/3-width/3)*1.8, width, height))
     pygame.draw.rect(window, GREY, (WIDTH/2-width/2, (WIDTH/3-width/3)*2.6, width, height))
     pygame.draw.line(window, BLACK, (0, HEIGHT/6), (WIDTH, HEIGHT/6))
+    window.blit(menuTitleText, (WIDTH/2-75,10))
 
 
 def isValidMove(board, row, col, num):
