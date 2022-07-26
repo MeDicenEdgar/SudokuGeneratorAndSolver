@@ -2,6 +2,7 @@ from ast import Return
 from random import shuffle, randint
 from numpy import empty
 import pygame
+from urllib3 import Retry
 from constants import *
 
 class Space:
@@ -15,7 +16,17 @@ class Space:
     def __repr__(self) -> str:
         return self.value
 
-def main(board):
+def main():
+    board = [
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)]]
     pygame.mixer.music.load("Resources/Music.mp3")
     pygame.mixer.music.play(-1)
     pygame.display.set_caption("Sudoku!")
@@ -52,10 +63,24 @@ def main(board):
                     val = 8
                 if event.key == pygame.K_9:
                     val = 9 
-                if event.key == pygame.K_RETURN and state == 1:
-                    if hasGameEnded(board):
-                        state = 3
-        state, generated, val = drawWindow(state, board, x, y, generated, val)
+                if event.key == pygame.K_RETURN:
+                    if state == 1:
+                        if hasGameEnded(board):
+                            state = 3
+                    elif state == 2:
+                        solveSudoku(board, 0, 0)
+                        state = 4
+                    elif state == 4:
+                        x, y = 0, 0
+                        board = resetBoard(board)
+                        state = 0
+                        generated = False
+                if event.key == pygame.K_ESCAPE:
+                    state = 0
+                    x, y = 0,0
+                        
+
+        state, generated, val, board = drawWindow(state, board, x, y, generated, val)
     pygame.quit()
 
 def drawWindow(state, board, x, y, generated, val):
@@ -65,22 +90,30 @@ def drawWindow(state, board, x, y, generated, val):
     elif state == 1:
         state = drawBoard(board)
         generated, val= boardGameLogic(board, x, y, generated, val)
-    elif state == 2:
+    elif state == 2 or state == 4:
         drawCreator(board)
+        val = creatorLogic(board,x ,y, val)
     elif state == 3:
-        pass
+        board = drawCongratulations(board)
+        generated = False
+    
+    if state == 4:
+        window.blit(solved, (20, 350))
+
     pygame.display.update()
     if ((x >= 105) and (y >= 135) and x <= 295 and y <= 205) and state == 0:
-        print("Lets play!")
         state = 1
         x,y = 0,0
 
     if ((x >= 105) and (y >= 245) and x <= 295 and y <= 315) and state == 0:
-        print("Give me a challenge!")
         state = 2
         x,y = 0,0
+    
+    if ((x >= 50) and (y >= 50) and x <= 350 and y <= 140) and state == 3:
+        state = 0
+        x,y = 0,0
 
-    return state, generated, val
+    return state, generated, val, board
 
 def drawBoard(board):
     gap = (WIDTH-100) / 9
@@ -125,7 +158,33 @@ def convertMouse(x,y):
     return x, y
 
 def drawCreator(board):
-    pass
+    gap = (WIDTH-100) / 9
+    for i in range(10):
+        if i % 3 == 0:
+            pygame.draw.line(window, BLACK, (50, 50 + gap*i), (WIDTH-50, 50 + gap*i), 2)
+            pygame.draw.line(window, BLACK, (50 + gap*i, 50), (50 + gap*i, HEIGHT - 50), 2)
+        else:
+            pygame.draw.line(window, BLACK, (50, 50 + gap*i), (WIDTH-50, 50 + gap*i))
+            pygame.draw.line(window, BLACK, (50 + gap*i, 50), (50 + gap*i, HEIGHT - 50))
+
+    for i in range(9):
+        for j in range(9):
+            drawValue(board[j][i].value, 62+ gap*i, 60+ gap*j)
+
+    return 2
+
+def creatorLogic(board, x, y, val):
+    if x>=50 and x<=350 and y<=350 and y>=50:
+        col, row = convertMouse(x,y)
+        col, row = int(row), int(col)
+        print("{}, {}, {}".format(row, col, board[row][col].canUserInput))
+        selected = [row, col]
+        drawSelected(board, row, col)
+    if val is not None:
+        if selected is not empty and isValidMove(board, col, row, val) :
+            changeBoard(board, col, row, val)
+            val = None
+    return val
 
 def drawMenu():
     width = 190
@@ -152,7 +211,28 @@ def drawSelected(board, row, col):
     elif board[col][row].canUserInput == True:
         pygame.draw.rect(window, GREEN, (50+row*gap, 50+col*gap, gap+2, gap), 3)
 
-
+def drawCongratulations(board):
+    pygame.draw.rect(window, GREY, (50,50,300,90))
+    pygame.draw.rect(window, BLACK, (50,50,300,90), 2)
+    congText = fontButtons.render("Congratulations!", True, BLACK)
+    clickText = fontNumbers.render("Click Here to return to the main menu", True, BLACK)
+    window.blit(congText, (53,60))
+    window.blit(clickText, (100,110))
+    board = resetBoard(board)
+    return board
+    
+def resetBoard(board):
+    board = [
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
+        [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)]]
+    return board
 def isValidMove(board, row, col, num):
     for i in range(9):
         if board[row][i].value == num:
@@ -216,7 +296,7 @@ def solveSudoku(board, x, y):
         return solveSudoku(board, x, y+1)
     for num in range(1, 10, 1):
         if isValidMove(board, x, y, num) == True:
-            board[x][y].value = num
+            board[x][y].value = num 
             printBoard(board)
             if solveSudoku(board, x, y + 1) == True:
                 return True
@@ -246,7 +326,7 @@ def generateSudokuSolved(board, x, y):
     return False
 
 def unsolve(board):
-    clues = randint(17,40)
+    clues = randint(17, 40)
     usedCoords=[]
     while len(usedCoords)<(81-clues):
         x = randint(0,8)
