@@ -13,6 +13,6 @@ if __name__ == "__main__":
         [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
         [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)],
         [Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0),Space(0)]]
-    main()
+    main(board)
         
     

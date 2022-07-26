@@ -1,5 +1,6 @@
+from ast import Return
 from random import shuffle, randint
-from turtle import width
+from numpy import empty
 import pygame
 from constants import *
 
@@ -14,34 +15,142 @@ class Space:
     def __repr__(self) -> str:
         return self.value
 
-def main():
+def main(board):
+    pygame.mixer.music.load("Resources/Music.mp3")
+    pygame.mixer.music.play(-1)
     pygame.display.set_caption("Sudoku!")
     clock = pygame.time.Clock()
     run = True
+    val = None
     state = 0
+    x, y = 0, 0
+    generated = False
     while run:
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-        state = drawWindow(state)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                print("{}, {}".format(x, y))
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    val = 1
+                if event.key == pygame.K_2:
+                    val = 2   
+                if event.key == pygame.K_3:
+                    val = 3
+                if event.key == pygame.K_4:
+                    val = 4
+                if event.key == pygame.K_5:
+                    val = 5
+                if event.key == pygame.K_6:
+                    val = 6
+                if event.key == pygame.K_7:
+                    val = 7
+                if event.key == pygame.K_8:
+                    val = 8
+                if event.key == pygame.K_9:
+                    val = 9 
+                if event.key == pygame.K_RETURN and state == 1:
+                    if hasGameEnded(board):
+                        state = 3
+        state, generated, val = drawWindow(state, board, x, y, generated, val)
     pygame.quit()
 
-def drawWindow(state):
+def drawWindow(state, board, x, y, generated, val):
     window.fill(WHITE)
     if state == 0:
         drawMenu()
+    elif state == 1:
+        state = drawBoard(board)
+        generated, val= boardGameLogic(board, x, y, generated, val)
+    elif state == 2:
+        drawCreator(board)
+    elif state == 3:
+        pass
     pygame.display.update()
-    return state
+    if ((x >= 105) and (y >= 135) and x <= 295 and y <= 205) and state == 0:
+        print("Lets play!")
+        state = 1
+        x,y = 0,0
+
+    if ((x >= 105) and (y >= 245) and x <= 295 and y <= 315) and state == 0:
+        print("Give me a challenge!")
+        state = 2
+        x,y = 0,0
+
+    return state, generated, val
+
+def drawBoard(board):
+    gap = (WIDTH-100) / 9
+    for i in range(10):
+        if i % 3 == 0:
+            pygame.draw.line(window, BLACK, (50, 50 + gap*i), (WIDTH-50, 50 + gap*i), 2)
+            pygame.draw.line(window, BLACK, (50 + gap*i, 50), (50 + gap*i, HEIGHT - 50), 2)
+        else:
+            pygame.draw.line(window, BLACK, (50, 50 + gap*i), (WIDTH-50, 50 + gap*i))
+            pygame.draw.line(window, BLACK, (50 + gap*i, 50), (50 + gap*i, HEIGHT - 50))
+
+    for i in range(9):
+        for j in range(9):
+            drawValue(board[j][i].value, 62+ gap*i, 60+ gap*j)
+
+    return 1
+    
+def boardGameLogic(board, x, y, generated, val):
+    selected = []
+    row,col = 0,0
+    if generated == False:
+        generateSudokuSolved(board, 0, 0)
+        return True, val
+    if x>=50 and x<=350 and y<=350 and y>=50:
+        col, row = convertMouse(x,y)
+        col, row = int(row), int(col)
+        print("{}, {}, {}".format(row, col, board[row][col].canUserInput))
+        selected = [row, col]
+        drawSelected(board, row, col)
+    if val is not None:
+        if selected is not empty and isValidMove(board, col, row, val) :
+            changeBoard(board, col, row, val)
+            val = None
+    return generated, val
+
+def convertMouse(x,y):
+    gap = 300/9
+    x -= 50
+    y -= 50
+    x = x/gap
+    y = y/gap
+    return x, y
+
+def drawCreator(board):
+    pass
 
 def drawMenu():
-    width = 110
-    height = 50
-    pygame.draw.rect(window, GREY, (WIDTH/2-width/2, WIDTH/3-width/3, width, height))
-    pygame.draw.rect(window, GREY, (WIDTH/2-width/2, (WIDTH/3-width/3)*1.8, width, height))
-    pygame.draw.rect(window, GREY, (WIDTH/2-width/2, (WIDTH/3-width/3)*2.6, width, height))
-    pygame.draw.line(window, BLACK, (0, HEIGHT/6), (WIDTH, HEIGHT/6))
-    window.blit(menuTitleText, (WIDTH/2-75,10))
+    width = 190
+    height = 70
+    pygame.draw.rect(window, GREY, (WIDTH/2-width/2, WIDTH/2-width/3, width, height))
+    pygame.draw.rect(window, GREY, (WIDTH/2-width/2, (WIDTH/2-width/3)*1.8, width, height))
+    pygame.draw.rect(window, BLACK, (WIDTH/2-width/2, WIDTH/2-width/3, width, height), 1)
+    pygame.draw.rect(window, BLACK, (WIDTH/2-width/2, (WIDTH/2-width/3)*1.8, width, height), 1)
+    pygame.draw.line(window, BLACK, (0, HEIGHT/5), (WIDTH, HEIGHT/5))
+    window.blit(menuTitleText, (WIDTH/2-90,17))
+    window.blit(button1Text, (WIDTH/2-43, HEIGHT/2-55))
+    window.blit(button2Text, (WIDTH/2-55, (HEIGHT/2)+55))
+
+def drawValue(value, x, y):
+    if value == 0:
+        return
+    text = fontNumbers.render(str(value), 1, BLACK)
+    window.blit(text, (x, y))
+
+def drawSelected(board, row, col):
+    gap = (WIDTH-100)/9
+    if board[col][row].canUserInput == False:
+        pygame.draw.rect(window, RED, (50+row*gap, 50+col*gap, gap+2, gap), 3)
+    elif board[col][row].canUserInput == True:
+        pygame.draw.rect(window, GREEN, (50+row*gap, 50+col*gap, gap+2, gap), 3)
 
 
 def isValidMove(board, row, col, num):
@@ -60,7 +169,6 @@ def isValidMove(board, row, col, num):
             if board[i + startRow][j + startCol].value == num:
                 return False
     return True
- 
 
 def hasGameEnded(board):
     for i in range(9):
@@ -138,7 +246,7 @@ def generateSudokuSolved(board, x, y):
     return False
 
 def unsolve(board):
-    clues = randint(17,30)
+    clues = randint(17,40)
     usedCoords=[]
     while len(usedCoords)<(81-clues):
         x = randint(0,8)
@@ -147,3 +255,8 @@ def unsolve(board):
             usedCoords.append([x,y])
             board[x][y].value = 0
             printBoard(board)
+    
+    for i in range(9):
+        for j in range(9):
+            if board[i][j].value != 0:
+                board[i][j].canUserInput = False
