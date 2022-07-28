@@ -1,8 +1,5 @@
-from ast import Return
 from random import shuffle, randint
-from numpy import empty
 import pygame
-from urllib3 import Retry
 from constants import *
 
 class Space:
@@ -144,7 +141,7 @@ def boardGameLogic(board, x, y, generated, val):
         selected = [row, col]
         drawSelected(board, row, col)
     if val is not None:
-        if selected is not empty and isValidMove(board, col, row, val) :
+        if selected is not None and isValidMove(board, col, row, val) :
             changeBoard(board, col, row, val)
             val = None
     return generated, val
@@ -181,7 +178,7 @@ def creatorLogic(board, x, y, val):
         selected = [row, col]
         drawSelected(board, row, col)
     if val is not None:
-        if selected is not empty and isValidMove(board, col, row, val) :
+        if selected is not None and isValidMove(board, col, row, val) :
             changeBoard(board, col, row, val)
             val = None
     return val
